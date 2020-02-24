@@ -58,47 +58,66 @@ char	*get_home()
 	return (home);
 }
 
+char	*create_str(char **line, int len)
+{
+	char	*tmp;
+	int	i;
+	int	j;
+	
+	tmp = NULL;
+	i = 0;
+	j = 0;
+	while (line[0][i] != '\0')
+	{
+		if (line[0][i] == '~')
+		{
+			len += len;
+			j++;
+		}
+		i++;
+	}
+	tmp = ft_strnew((i + 1 + len - j));
+	return (tmp);
+}
+
+void	build_new(char **line, int len, char *tmp)
+{
+	int	i;
+	
+	i = 0;
+	while (line[0][i] != '\0')
+	{
+		if (line[0][i] != '~')
+		{
+			tmp[i] = line[0][i];
+			i++;
+		}
+		else
+		{
+			ft_strncpy(&tmp[i], home, len);
+			i += len;
+		}
+	}
+}
+
 void	check_for_tilde(char **line)
 {
 	char	*h;
 	char	*tmp;
 	char	*home;
-	int		j;
 	int		i;
 	int		len;
 
 	i = 0;
-	j = 0;
 	h = NULL;
 	home = get_home();
 	len = ft_strlen(home) - 5;
 	tmp = NULL;
 	if ((h = ft_strrchr(line[0], '~')))
 	{
-		while (line[0][i] != '\0')
-		{
-			if (line[0][i] == '~')
-			{
-				len += len;
-				j++;
-			}
-			i++;
-		}
-		tmp = ft_strnew((i + 1 + len - j));
+		tmp = create_str(line, len);
 		i = 0;
-		while (line[0][i] != '\0')
-		{
-			if (line[0][i] != '~')
-			{
-				tmp[i] = line[0][i];
-				i++;
-			}
-			else
-			{
-				ft_strncpy(&tmp[i], home, len);
-				i += len;
-			}
-		}
+		build_new(line, len, tmp);
 		ft_strdel(&line[0]);
 		printf("new line: |%s|\n", tmp);
 		line[0] = ft_strdup(tmp);
