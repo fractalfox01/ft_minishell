@@ -6,7 +6,7 @@
 /*   By: tvandivi <tvandivi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/22 22:07:52 by tvandivi          #+#    #+#             */
-/*   Updated: 2020/02/23 10:53:53 by tvandivi         ###   ########.fr       */
+/*   Updated: 2020/02/24 11:21:07 by tvandivi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,7 +58,8 @@ char	*cfds_helper(char *cmd)
 		tmp[i++] = cmd[start];
 		start++;
 	}
-	tmp[start] = '\0';
+	if (i > 0)
+		tmp[i] = '\0';
 	return (tmp);
 }
 

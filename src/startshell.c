@@ -6,7 +6,7 @@
 /*   By: tvandivi <tvandivi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/20 12:17:24 by tvandivi          #+#    #+#             */
-/*   Updated: 2020/02/21 11:11:36 by tvandivi         ###   ########.fr       */
+/*   Updated: 2020/02/23 11:28:21 by tvandivi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,7 @@ void	start_minishell(t_mini_exc *glob)
 		{
 			if (ret == 1)
 			{
+				update_history(glob, line);
 				process = new_process(line);
 				glob->pid = fork();
 				if (glob->pid == 0)

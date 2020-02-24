@@ -6,7 +6,7 @@
 /*   By: tvandivi <tvandivi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/20 13:15:04 by tvandivi          #+#    #+#             */
-/*   Updated: 2020/02/20 17:07:02 by tvandivi         ###   ########.fr       */
+/*   Updated: 2020/02/24 11:53:05 by tvandivi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,32 +70,34 @@ char	*create_str(char **line, int len)
 	while (line[0][i] != '\0')
 	{
 		if (line[0][i] == '~')
-		{
-			len += len;
+			j += len;
+		else
 			j++;
-		}
 		i++;
 	}
-	tmp = ft_strnew((i + 1 + len - j));
+	tmp = ft_strnew((j + 1));
 	return (tmp);
 }
 
-void	build_new(char **line, int len, char *tmp)
+void	build_new(char **line, int len, char *tmp, char *home)
 {
 	int	i;
+	int	j;
 	
 	i = 0;
+	j = 0;
 	while (line[0][i] != '\0')
 	{
 		if (line[0][i] != '~')
 		{
-			tmp[i] = line[0][i];
+			tmp[(i + j)] = line[0][i];
 			i++;
 		}
 		else
 		{
-			ft_strncpy(&tmp[i], home, len);
-			i += len;
+			ft_strncpy(&tmp[(i + j)], home, len);
+			i++;
+			j += (len - 1);
 		}
 	}
 }
@@ -104,22 +106,18 @@ void	check_for_tilde(char **line)
 {
 	char	*h;
 	char	*tmp;
-	char	*home;
-	int		i;
 	int		len;
+	char	*home;
 
-	i = 0;
 	h = NULL;
 	home = get_home();
-	len = ft_strlen(home) - 5;
+	len = ft_strlen(home);
 	tmp = NULL;
-	if ((h = ft_strrchr(line[0], '~')))
+	while ((h = ft_strrchr(line[0], '~')))
 	{
 		tmp = create_str(line, len);
-		i = 0;
-		build_new(line, len, tmp);
+		build_new(line, len, tmp, home);
 		ft_strdel(&line[0]);
-		printf("new line: |%s|\n", tmp);
 		line[0] = ft_strdup(tmp);
 		ft_strdel(&tmp);
 	}

@@ -2,7 +2,7 @@ NAME= ft_minishell
 
 TEST= test
 
-SRC := $(addsuffix .c, src/glob_init src/process src/startshell src/expand_tilde src/expand_dollar)
+SRC := $(addsuffix .c, src/glob_init src/process src/startshell src/expand_tilde src/expand_dollar src/expand_path src/shell_history)
 
 INC := $(addsuffix .h, includes/ft_minishell includes/libft)
 
@@ -17,7 +17,7 @@ $(TEST): fc
 	@make -C libft/ re
 	@cp libft/libft.a .
 	@rm -rf ft_minishell.dSYM 2>/dev/null | echo deleted
-	@gcc $(FLAGS) -g $(SRC) libft.a src/main.c -o $(NAME)
+	@gcc $(FLAGS) -fsanitize=address -g $(SRC) libft.a src/main.c -o $(NAME)
 
 all: $(NAME)
 

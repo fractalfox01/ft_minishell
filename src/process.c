@@ -6,34 +6,11 @@
 /*   By: tvandivi <tvandivi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/20 12:22:08 by tvandivi          #+#    #+#             */
-/*   Updated: 2020/02/23 10:54:46 by tvandivi         ###   ########.fr       */
+/*   Updated: 2020/02/23 17:50:14 by tvandivi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/ft_minishell.h"
-
-static char	*get_path(char *str)
-{
-	int len;
-	int i;
-
-	len = 0;
-	i = 0;
-	while (str[len] == ' ')
-		len++;
-	while (str[len] != '\0' && str[len] != ' ')
-		len++;
-	char *ret = (char *)malloc(sizeof(char) * (len + 1));
-	while (str[i] == ' ')
-		i++;
-	while (str[i] != '\0' && str[i] != ' ')
-	{
-		ret[i] = str[i];
-		i++;
-	}
-	ret[i] = '\0';
-	return (ret);
-}
 
 static void	get_args_init(int *i, int *j, int *end, int *count)
 {
@@ -183,6 +160,41 @@ char	*grab_value(char *str)
 	return (ret);
 }
 
+t_plst	*init_node()
+{
+	t_plst	*node;
+
+	node = (t_plst *)malloc(sizeof(t_plst) * 1);
+	node->argv = NULL;
+	node->envp = NULL;
+	node->path = NULL;
+	node->next = NULL;
+	return (node);
+}
+
+static char	*get_path(char *str)
+{
+	int len;
+	int i;
+
+	len = 0;
+	i = 0;
+	while (str[len] == ' ')
+		len++;
+	while (str[len] != '\0' && str[len] != ' ')
+		len++;
+	char *ret = (char *)malloc(sizeof(char) * (len + 1));
+	while (str[i] == ' ')
+		i++;
+	while (str[i] != '\0' && str[i] != ' ')
+	{
+		ret[i] = str[i];
+		i++;
+	}
+	ret[i] = '\0';
+	return (ret);
+}
+
 t_plst *new_process(char *command)
 {
 	t_plst	*node;
@@ -190,13 +202,15 @@ t_plst *new_process(char *command)
 	char	**av;
 	char	**ep;
 	
-	node = (t_plst *)malloc(sizeof(t_plst) * 1);
+	node = init_node();
 	check_for_tilde(&command);
 	check_for_dollar_sign(&command);
 	path = get_path(command);
+	expand_path(&path);
 	av = get_args(command);
 	ep = get_env();
 	node->path = ft_strdup(path);
+	ft_strdel(&path);
 	node->argv = av;
 	node->envp = ep;
 	node->next = NULL;

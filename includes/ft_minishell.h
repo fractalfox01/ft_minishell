@@ -45,6 +45,9 @@ void	start_minishell(t_mini_exc *glob);
 void	free_process(t_plst **process);
 void	check_for_tilde(char **line);
 void	check_for_dollar_sign(char **command);
+void	expand_path(char **command);
+
+void    update_history(t_mini_exc *glob, char *line);
 
 // /*
 // ** minishell utility functions
