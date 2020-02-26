@@ -6,7 +6,7 @@
 /*   By: tvandivi <tvandivi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/23 17:33:57 by tvandivi          #+#    #+#             */
-/*   Updated: 2020/02/23 19:35:18 by tvandivi         ###   ########.fr       */
+/*   Updated: 2020/02/25 13:28:46 by tvandivi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -114,7 +114,7 @@ char	*all_but_first(char *str)
 	return (NULL);
 }
 
-void	check_dir_for_cmd(char *env_paths, DIR *dr, char *path, char **command)
+int		check_dir_for_cmd(char *env_paths, DIR *dr, char *path, char **command)
 {
 	int				i;
 	char			*tmp;
@@ -137,21 +137,24 @@ void	check_dir_for_cmd(char *env_paths, DIR *dr, char *path, char **command)
 			// ft_strdel(&tmp2);
 			ft_strdel(&full_path);
 			closedir(dr);
-			return ;
+			return (1);
 		}
 	}
 	closedir(dr);
 	dr = NULL;
+	return (0);
 }
 
-void	expand_path(char **command)
+int		expand_path(char **command)
 {
 	char			*path;
 	char			**env_paths;
 	int				i;
 	DIR				*dr;
 	struct stat		st;
+	int				ret;
 
+	ret = 0;
 	i = 0;
 	dr = NULL;
 	path = NULL;
@@ -165,8 +168,13 @@ void	expand_path(char **command)
 		{
 			dr = opendir(env_paths[i]);
 			if (dr)
-				check_dir_for_cmd(env_paths[i], dr, path, command);
+			{
+				ret = check_dir_for_cmd(env_paths[i], dr, path, command);
+				if (ret)
+					break ;
+			}
 		}
 		i++;
 	}
+	return (ret);
 }

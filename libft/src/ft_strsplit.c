@@ -6,7 +6,7 @@
 /*   By: tvandivi <tvandivi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/02/18 13:25:45 by tvandivi          #+#    #+#             */
-/*   Updated: 2020/02/17 21:04:08 by tvandivi         ###   ########.fr       */
+/*   Updated: 2020/02/25 17:55:50 by tvandivi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,7 @@ char	**ft_strsplit(char const *s, char c)
 	else
 	{
 		tab = (char **)malloc(sizeof(s) * 1);
+		tab[0] = ft_strdup(s);
 		return (tab);
 	}
 	return (tab);

@@ -6,7 +6,7 @@
 /*   By: tvandivi <tvandivi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/20 12:22:08 by tvandivi          #+#    #+#             */
-/*   Updated: 2020/02/23 17:50:14 by tvandivi         ###   ########.fr       */
+/*   Updated: 2020/02/25 18:01:42 by tvandivi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -168,6 +168,7 @@ t_plst	*init_node()
 	node->argv = NULL;
 	node->envp = NULL;
 	node->path = NULL;
+	node->ampersand = 0;
 	node->next = NULL;
 	return (node);
 }
@@ -195,26 +196,137 @@ static char	*get_path(char *str)
 	return (ret);
 }
 
+char	*ft_sentencetrim(char *str)
+{
+	int		i;
+	int		j;
+	int		k;
+	int		len;
+	char	*tmp;
+	char	*ret;
+	int		c_btw;
+	int		ampersand;
+	int		semicolon;
+
+	i = 0;
+	j = 0;
+	k = 0;
+	ampersand = 0;
+	semicolon = 0;
+	c_btw = 0;
+	tmp = NULL;
+	ret = NULL;
+	tmp = ft_strtrim(str);
+	len = ft_strlen(tmp);
+	while (tmp[i] != '\0')
+	{
+		if (ft_whitespace(tmp[i]) && ft_whitespace(tmp[(i + 1)]))
+			len--;
+		i++;
+	}
+	i = 0;
+	ret = ft_strnew(len);
+	if (ret)
+	{
+		while (tmp[i] != '\0')
+		{
+			if (ft_whitespace(tmp[i]) && ((ft_whitespace(tmp[i + 1]) == 0) && (tmp[i + 1] != ';')))
+			{
+				if ((i > 0) && (tmp[i - 1] != ';'))
+				{
+					k = i - 1;
+					while (k > 0)
+					{
+						if (tmp[k] == ' ')
+							k--;
+						else
+							break ;
+					}
+					if (tmp[k] != ';')
+						ret[j++] = tmp[i];
+					k = 0;
+				}
+				if (i == 0)
+					ret[j++] = tmp[i];
+			}
+			else if (!(ft_whitespace(tmp[i])))
+				ret[j++] = tmp[i];
+			i++;
+		}
+		ret[j] = '\0';
+	}
+	return (ret);
+}
+
 t_plst *new_process(char *command)
 {
 	t_plst	*node;
+	t_plst	*root;
 	char	*path;
 	char	**av;
 	char	**ep;
-	
-	node = init_node();
-	check_for_tilde(&command);
-	check_for_dollar_sign(&command);
-	path = get_path(command);
-	expand_path(&path);
-	av = get_args(command);
-	ep = get_env();
-	node->path = ft_strdup(path);
-	ft_strdel(&path);
-	node->argv = av;
-	node->envp = ep;
-	node->next = NULL;
-	return (node);
+	char	**tab;
+	int		i;
+	int		good;
+	char	*trimmed;
+	char	*c;
+
+	good = 0;
+	i = 0;
+	tab = NULL;
+	node = NULL;
+	c = NULL;
+	trimmed = ft_sentencetrim(command);
+	tab = ft_strsplit(trimmed, ';');
+	if (trimmed)
+		ft_strdel(&trimmed);
+	root = NULL;
+	if (tab)
+	{
+		while (tab[i])
+		{
+			check_for_tilde(&tab[i]);
+			check_for_dollar_sign(&tab[i]);
+			path = get_path(tab[i]);
+			good = expand_path(&path);
+			if (good)
+			{
+				if (av)
+					av = NULL;
+				av = get_args(tab[i]); // needs to exclude ampersand
+				if (ep)
+					ep = NULL;
+				ep = get_env();
+				if (i == 0)
+				{
+					node = init_node();
+					root = node;
+				}
+				node->path = ft_strdup(path);
+				ft_strdel(&path);
+				node->argv = av;
+				node->envp = ep;
+				if ((c = ft_strrchr(tab[i], '&')))
+					node->ampersand = 1;
+				c = NULL;
+				if (tab[i + 1])
+				{
+					node->next = init_node();
+					node = node->next;
+				}
+				else
+					node->next = NULL;
+			}
+			else
+			{
+				ft_putstr_fd("ft_minishell: command not found: ", 2);
+				ft_putstr_fd(path, 2);
+				ft_putstr_fd("\n", 2);
+			}
+			i++;
+		}		
+	}
+	return (root);
 }
 
 void	free_process(t_plst **process)
