@@ -24,6 +24,7 @@ typedef struct				s_process_list
 typedef struct	s_mini_exc
 {
 	char			**history;
+	int				**proc_tab;
 	size_t			history_size;
 	int				glob_pid;
 	int				pid;

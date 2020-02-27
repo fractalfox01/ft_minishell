@@ -6,7 +6,7 @@
 /*   By: tvandivi <tvandivi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/20 12:22:08 by tvandivi          #+#    #+#             */
-/*   Updated: 2020/02/25 18:01:42 by tvandivi         ###   ########.fr       */
+/*   Updated: 2020/02/27 09:51:30 by tvandivi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,11 +76,10 @@ static char	**get_args(char *str)
 	ret = (char **)malloc(sizeof(char *) * (count + 1));
 	while (j < count)
 	{
-		ret[j] = ft_strndup(str);
+		ret[j++] = ft_strndup(str);
 		while (*str != '\0' && (*str != ' '))
 			str++;
 		str++;
-		j++;
 	}
 	ret[j] = NULL;
 	return (ret);
@@ -258,6 +257,100 @@ char	*ft_sentencetrim(char *str)
 	return (ret);
 }
 
+int		check_for_ampersand(char **str)
+{
+	int 	ret;
+	int		i;
+	char	*s1;
+	char	*s2;
+
+	i = 0;
+	ret = 0;
+	s1 = NULL;
+	s2 = NULL;
+	while (str[0][i] != '\0')
+	{
+		if (str[0][i] == '&')
+		{
+			ret++;
+			s1 = ft_strnew(i + 1);
+			s1 = ft_strncpy(s1, str[0], i);
+			i++;
+			s2 = ft_strjoin(s1, &str[0][i]);
+			ft_strdel(&s1);
+			ft_strdel(str);
+			str[0] = ft_strdup(s2);
+			ft_strdel(&s2);
+			check_for_ampersand(str);
+			break ;
+		}
+		i++;
+	}
+	return (ret);
+}
+
+static int		check_for(char *str, char *checkfor)
+{
+	int	i;
+	int	len;
+
+	i = 0;
+	len = ft_strlen(checkfor);
+	if (str && checkfor)
+	{
+		while (((str[i] != '\0') && (str[i] == checkfor[i])) && (i < len))
+			i++;
+		if (i == len)
+			return (1);
+	}
+	return (0);
+}
+
+static int		is_home(char *str)
+{
+	return (check_for(str, "HOME="));
+}
+
+char	*mini_get_home()
+{
+	char	*home;
+	int		i;
+
+	home = NULL;
+	i = 0;
+	while (environ[i])
+	{
+		if (is_home(environ[i]))
+		{
+			home = ft_strdup(environ[i]);
+			break ;
+		}
+		i++;
+	}
+	return (home);
+}
+
+int		check_if_exacutable(char *path)
+{
+	int		ret;
+	char	*tpath;
+	char	*home;
+	char	*tmp;
+
+	home = mini_get_home();
+	tmp = ft_strjoin((home + 5), "/");
+	tpath = ft_strjoin(tmp, path);
+	ft_strdel(&home);
+	ft_strdel(&tmp);
+	ret = 0;
+	if (access(path, X_OK) == 0)
+	{
+		ret = 1;
+	}
+	ft_strdel(&tpath);
+	return (ret);
+}
+
 t_plst *new_process(char *command)
 {
 	t_plst	*node;
@@ -270,7 +363,13 @@ t_plst *new_process(char *command)
 	int		good;
 	char	*trimmed;
 	char	*c;
+	int		k;
+	int		n;
+	int		amp;
 
+	amp = 0;
+	n = 0;
+	k = 0;
 	good = 0;
 	i = 0;
 	tab = NULL;
@@ -285,6 +384,7 @@ t_plst *new_process(char *command)
 	{
 		while (tab[i])
 		{
+			amp = check_for_ampersand(&tab[i]);
 			check_for_tilde(&tab[i]);
 			check_for_dollar_sign(&tab[i]);
 			path = get_path(tab[i]);
@@ -293,7 +393,7 @@ t_plst *new_process(char *command)
 			{
 				if (av)
 					av = NULL;
-				av = get_args(tab[i]); // needs to exclude ampersand
+				av = get_args(tab[i]);
 				if (ep)
 					ep = NULL;
 				ep = get_env();
@@ -303,11 +403,49 @@ t_plst *new_process(char *command)
 					root = node;
 				}
 				node->path = ft_strdup(path);
+				if (amp)
+				{
+					node->ampersand = 1;
+					amp = 0;
+				}
 				ft_strdel(&path);
 				node->argv = av;
 				node->envp = ep;
-				if ((c = ft_strrchr(tab[i], '&')))
+				c = NULL;
+				if (tab[i + 1])
+				{
+					node->next = init_node();
+					node = node->next;
+				}
+				else
+					node->next = NULL;
+			}
+			else if (check_if_exacutable(path))
+			{
+				if (av)
+					av = NULL;
+				av = get_args(tab[i]);
+				if (ep)
+					ep = NULL;
+				ep = get_env();
+				if (i == 0)
+				{
+					node = init_node();
+					root = node;
+				}
+				char *home = mini_get_home();
+				char *tmp = ft_strjoin((home + 5), "/");
+				node->path = ft_strdup(path);
+				ft_strdel(&home);
+				ft_strdel(&tmp);
+				if (amp)
+				{
 					node->ampersand = 1;
+					amp = 0;
+				}
+				ft_strdel(&path);
+				node->argv = av;
+				node->envp = ep;
 				c = NULL;
 				if (tab[i + 1])
 				{
