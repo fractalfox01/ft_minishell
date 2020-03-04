@@ -130,13 +130,11 @@ char	*ft_removestr(char *hstack, char *needle)
 	int		i;
 	int		start;
 	int		stop;
-	int		count;
 	int		n_len;
 
 	i = 0;
 	start = 0;
 	stop = 0;
-	count = 0;
 	n_len = ft_strlen(needle);
 	t = NULL;
 	t2 = NULL;
@@ -382,7 +380,7 @@ void	mini_set_env(t_mini_exc *glob, t_plst *node)
 			while (glob->envp[j][k] != '\0')
 				k++;
 			k = 0;
-			while (remainder[p] != '\0')
+			while (remainder[m][p] != '\0')
 				glob->envp[j][k++] = remainder[m][p++];
 			j++;
 			k = 0;
