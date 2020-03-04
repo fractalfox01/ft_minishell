@@ -92,7 +92,7 @@ void	set_and_free(char **tab, char **buf)
 
 int		get_next_line(int fd, char **line)
 {
-	static char	*tab[OPEN_MAX];
+	static char	*tab[255];
 	char		*buf;
 	int			a;
 
