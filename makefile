@@ -6,7 +6,7 @@ SRC := $(addsuffix .c, src/glob_init src/process src/startshell src/expand_tilde
 
 INC := $(addsuffix .h, includes/ft_minishell includes/libft)
 
-FLAGS= -Wall -Werror -Wextra -Wunused-value -fsanitize=address -Wno-unused-variable
+FLAGS= -Wall -Werror -Wextra -Wunused-value -fsanitize=address -Wno-unused-variable -Werror=unused-but-set-variable -Werror=pointer-compare
 
 $(NAME):
 	@make -C libft/ re
