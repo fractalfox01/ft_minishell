@@ -17,10 +17,13 @@ void	start_minishell(t_mini_exc *glob)
 {
 	t_plst	**process;
 	char	*line;
-	int		ret;
-	int		count = 0;
+	int	ret;
+	int	count;
+	int	flag;
 
 	ret = 0;
+	count = 0;
+	flag = 0;
 	line = NULL;
 	process = (t_plst **)malloc(sizeof(t_plst *) * 2);
 	init_proc(process, 2);
