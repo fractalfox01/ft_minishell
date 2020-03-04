@@ -18,12 +18,8 @@ void	start_minishell(t_mini_exc *glob)
 	t_plst	**process;
 	char	*line;
 	int		ret;
-	int		i;
 	int		count = 0;
-	int		flag;
 
-	flag = 0;
-	i = 0;
 	ret = 0;
 	line = NULL;
 	process = (t_plst **)malloc(sizeof(t_plst *) * 2);
