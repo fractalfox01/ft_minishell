@@ -94,10 +94,12 @@ static char	*get_path(char *str)
 
 char	*all_but_first(char *str)
 {
-	int		i;
+	int	i;
+	int	len;
 	char	*ret;
 
 	i = 0;
+	len = 0;
 	while (str[i] != '\0' && str[i] != ' ')
 		i++;
 	if (str[i] == ' ')
@@ -115,7 +117,9 @@ int		check_dir_for_cmd(char *env_paths, DIR *dr, char *path, char **command)
 	char		*tmp;
 	char		*full_path;
 	struct dirent	*dent;
-
+	int		i;
+	
+	i = 0;
 	while ((dent = readdir(dr)))
 	{
 		if (ft_strcmp(dent->d_name, path) == 0)
