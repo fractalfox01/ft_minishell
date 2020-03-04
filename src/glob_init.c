@@ -6,7 +6,7 @@
 /*   By: tvandivi <tvandivi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/20 12:05:49 by tvandivi          #+#    #+#             */
-/*   Updated: 2020/02/26 10:49:21 by tvandivi         ###   ########.fr       */
+/*   Updated: 2020/03/03 12:08:40 by tvandivi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 
 void	init_mini_glob(t_mini_exc *glob)
 {
+	glob->envp = copy_environ();
 	glob->proc_tab = NULL;
 	glob->i = 0;
 	glob->history_size = 1000;

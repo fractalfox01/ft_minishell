@@ -6,7 +6,7 @@
 /*   By: tvandivi <tvandivi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/20 12:22:08 by tvandivi          #+#    #+#             */
-/*   Updated: 2020/02/27 09:51:30 by tvandivi         ###   ########.fr       */
+/*   Updated: 2020/03/03 12:32:58 by tvandivi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,20 +85,20 @@ static char	**get_args(char *str)
 	return (ret);
 }
 
-static char **get_env()
+static char **get_env(t_mini_exc *glob)
 {
 	char **ep;
 	int i;
 
 	ep = NULL;
 	i = 0;
-	while (environ[i])
+	while (glob->envp[i])
 		i++;
 	ep = (char **)malloc(sizeof(char *) * (i + 1));
 	i = 0;
-	while (environ[i])
+	while (glob->envp[i])
 	{
-		ep[i] = ft_strdup(environ[i]);
+		ep[i] = ft_strdup(glob->envp[i]);
 		i++;
 	}
 	ep[i] = NULL;
@@ -175,15 +175,17 @@ t_plst	*init_node()
 static char	*get_path(char *str)
 {
 	int len;
+	char *ret;
 	int i;
 
 	len = 0;
 	i = 0;
+	ret = NULL;
 	while (str[len] == ' ')
 		len++;
 	while (str[len] != '\0' && str[len] != ' ')
 		len++;
-	char *ret = (char *)malloc(sizeof(char) * (len + 1));
+	ret = (char *)malloc(sizeof(char) * (len + 1));
 	while (str[i] == ' ')
 		i++;
 	while (str[i] != '\0' && str[i] != ' ')
@@ -191,7 +193,8 @@ static char	*get_path(char *str)
 		ret[i] = str[i];
 		i++;
 	}
-	ret[i] = '\0';
+	if (i)
+		ret[i] = '\0';
 	return (ret);
 }
 
@@ -257,6 +260,23 @@ char	*ft_sentencetrim(char *str)
 	return (ret);
 }
 
+int		check_if_builtin(char *path)
+{
+	if (ft_strcmp(path, "exit") == 0)
+		return (1);
+	if (ft_strcmp(path, "cd") == 0)
+		return (1);
+	if (ft_strcmp(path, "env") == 0)
+		return (1);
+	if (ft_strcmp(path, "setenv") == 0)
+		return (1);
+	if (ft_strcmp(path, "echo") == 0)
+		return (1);
+	if (ft_strcmp(path, "unsetenv") == 0)
+		return (1);
+	return (0);
+}
+
 int		check_for_ampersand(char **str)
 {
 	int 	ret;
@@ -311,18 +331,23 @@ static int		is_home(char *str)
 	return (check_for(str, "HOME="));
 }
 
-char	*mini_get_home()
+static int		is_pwd(char *str)
+{
+	return (check_for(str, "PWD="));
+}
+
+char	*mini_get_home(t_mini_exc *glob)
 {
 	char	*home;
 	int		i;
 
 	home = NULL;
 	i = 0;
-	while (environ[i])
+	while (glob->envp[i])
 	{
-		if (is_home(environ[i]))
+		if (is_home(glob->envp[i]))
 		{
-			home = ft_strdup(environ[i]);
+			home = ft_strdup(glob->envp[i]);
 			break ;
 		}
 		i++;
@@ -330,20 +355,42 @@ char	*mini_get_home()
 	return (home);
 }
 
-int		check_if_exacutable(char *path)
+char	*mini_get_cwd(t_mini_exc *glob)
+{
+	char	*cwd;
+	int		i;
+
+	cwd = NULL;
+	i = 0;
+	while (glob->envp[i])
+	{
+		if (is_pwd(glob->envp[i]))
+		{
+			cwd = ft_strdup(glob->envp[i]);
+			break ;
+		}
+		i++;
+	}
+	return (cwd);
+}
+
+int		check_if_exacutable(t_mini_exc *glob, char *path)
 {
 	int		ret;
 	char	*tpath;
 	char	*home;
 	char	*tmp;
+	char	*tmp2;
 
-	home = mini_get_home();
+	home = mini_get_home(glob);
 	tmp = ft_strjoin((home + 5), "/");
-	tpath = ft_strjoin(tmp, path);
+	tmp2 = ft_strjoin(tmp, mini_get_cwd(glob));
+	tpath = ft_strjoin(tmp2, path);
 	ft_strdel(&home);
+	ft_strdel(&tmp2);
 	ft_strdel(&tmp);
 	ret = 0;
-	if (access(path, X_OK) == 0)
+	if ((ret = access(tpath, X_OK)) == 0)
 	{
 		ret = 1;
 	}
@@ -351,120 +398,123 @@ int		check_if_exacutable(char *path)
 	return (ret);
 }
 
-t_plst *new_process(char *command)
+void	free_ints()
 {
-	t_plst	*node;
-	t_plst	*root;
-	char	*path;
-	char	**av;
-	char	**ep;
-	char	**tab;
-	int		i;
-	int		good;
-	char	*trimmed;
-	char	*c;
-	int		k;
-	int		n;
-	int		amp;
 
-	amp = 0;
-	n = 0;
-	k = 0;
-	good = 0;
-	i = 0;
-	tab = NULL;
-	node = NULL;
-	c = NULL;
-	trimmed = ft_sentencetrim(command);
-	tab = ft_strsplit(trimmed, ';');
-	if (trimmed)
-		ft_strdel(&trimmed);
-	root = NULL;
-	if (tab)
+}
+
+void	proc_init(t_proc *proc, char *command)
+{
+	proc->var_int = (int *)malloc(sizeof(int) * 4);
+	proc->var_int[0] = 0;
+	proc->var_int[1] = 0;
+	proc->var_int[2] = 0;
+	proc->tmp = NULL;
+	proc->home = NULL;
+	proc->tab = NULL;
+	proc->node = NULL;
+	proc->c = NULL;
+	proc->trimmed = ft_sentencetrim(command);
+	proc->tab = ft_strsplit(proc->trimmed, ';');
+}
+
+t_plst *new_process(t_mini_exc *glob, char *command)
+{
+	t_proc	proc;
+	
+	proc_init(&proc, command);
+	if (proc.trimmed)
+		ft_strdel(&proc.trimmed);
+	proc.root = NULL;
+	if (proc.tab)
 	{
-		while (tab[i])
+		while (proc.tab[proc.var_int[0]])
 		{
-			amp = check_for_ampersand(&tab[i]);
-			check_for_tilde(&tab[i]);
-			check_for_dollar_sign(&tab[i]);
-			path = get_path(tab[i]);
-			good = expand_path(&path);
-			if (good)
+			proc.var_int[2] = check_for_ampersand(&proc.tab[proc.var_int[0]]);
+			check_for_tilde(glob, &proc.tab[proc.var_int[0]]);
+			check_for_dollar_sign(glob, &proc.tab[proc.var_int[0]]);
+			proc.trimmed = ft_sentencetrim(proc.tab[proc.var_int[0]]);
+			ft_strdel(&(proc.tab[proc.var_int[0]]));
+			proc.tab[proc.var_int[0]] = ft_strdup(proc.trimmed);
+			ft_strdel(&proc.trimmed);
+			proc.path = get_path(proc.tab[proc.var_int[0]]);
+			proc.var_int[1] = expand_path(glob, &proc.path);
+			if (proc.var_int[1] || check_if_builtin(proc.path))
 			{
-				if (av)
-					av = NULL;
-				av = get_args(tab[i]);
-				if (ep)
-					ep = NULL;
-				ep = get_env();
-				if (i == 0)
+				if (proc.av)
+					proc.av = NULL;
+				proc.av = get_args(proc.tab[proc.var_int[0]]);
+				if (proc.ep)
+					proc.ep = NULL;
+				proc.ep = get_env(glob);
+				if (proc.var_int[0] == 0)
 				{
-					node = init_node();
-					root = node;
+					proc.node = init_node();
+					proc.root = proc.node;
 				}
-				node->path = ft_strdup(path);
-				if (amp)
+				proc.node->path = ft_strdup(proc.path);
+				if (proc.var_int[2])
 				{
-					node->ampersand = 1;
-					amp = 0;
+					proc.node->ampersand = 1;
+					proc.var_int[2] = 0;
 				}
-				ft_strdel(&path);
-				node->argv = av;
-				node->envp = ep;
-				c = NULL;
-				if (tab[i + 1])
+				ft_strdel(&proc.path);
+				proc.node->argv = proc.av;
+				proc.node->envp = proc.ep;
+				proc.c = NULL;
+				if (proc.tab[proc.var_int[0] + 1])
 				{
-					node->next = init_node();
-					node = node->next;
+					proc.node->next = init_node();
+					proc.node = proc.node->next;
 				}
 				else
-					node->next = NULL;
+					proc.node->next = NULL;
 			}
-			else if (check_if_exacutable(path))
+			else if (check_if_exacutable(glob, proc.path))
 			{
-				if (av)
-					av = NULL;
-				av = get_args(tab[i]);
-				if (ep)
-					ep = NULL;
-				ep = get_env();
-				if (i == 0)
+				if (proc.av)
+					proc.av = NULL;
+				proc.av = get_args(proc.tab[proc.var_int[0]]);
+				if (proc.ep)
+					proc.ep = NULL;
+				proc.ep = get_env(glob);
+				if (proc.var_int[0] == 0)
 				{
-					node = init_node();
-					root = node;
+					proc.node = init_node();
+					proc.root = proc.node;
 				}
-				char *home = mini_get_home();
-				char *tmp = ft_strjoin((home + 5), "/");
-				node->path = ft_strdup(path);
-				ft_strdel(&home);
-				ft_strdel(&tmp);
-				if (amp)
+				proc.home = mini_get_home(glob);
+				proc.tmp = ft_strjoin((proc.home + 5), "/");
+				proc.node->path = ft_strdup(proc.path);
+				ft_strdel(&proc.home);
+				ft_strdel(&proc.tmp);
+				if (proc.var_int[2])
 				{
-					node->ampersand = 1;
-					amp = 0;
+					proc.node->ampersand = 1;
+					proc.var_int[2] = 0;
 				}
-				ft_strdel(&path);
-				node->argv = av;
-				node->envp = ep;
-				c = NULL;
-				if (tab[i + 1])
+				ft_strdel(&proc.path);
+				proc.node->argv = proc.av;
+				proc.node->envp = proc.ep;
+				proc.c = NULL;
+				if (proc.tab[proc.var_int[0] + 1])
 				{
-					node->next = init_node();
-					node = node->next;
+					proc.node->next = init_node();
+					proc.node = proc.node->next;
 				}
 				else
-					node->next = NULL;
+					proc.node->next = NULL;
 			}
 			else
 			{
 				ft_putstr_fd("ft_minishell: command not found: ", 2);
-				ft_putstr_fd(path, 2);
+				ft_putstr_fd(proc.path, 2);
 				ft_putstr_fd("\n", 2);
 			}
-			i++;
+			proc.var_int[0]++;
 		}		
 	}
-	return (root);
+	return (proc.root);
 }
 
 void	free_process(t_plst **process)

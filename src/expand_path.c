@@ -6,7 +6,7 @@
 /*   By: tvandivi <tvandivi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/23 17:33:57 by tvandivi          #+#    #+#             */
-/*   Updated: 2020/02/25 13:28:46 by tvandivi         ###   ########.fr       */
+/*   Updated: 2020/03/03 12:24:16 by tvandivi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,7 @@ static char	*chomp_path(char *str)
 	return (path);
 }
 
-static char	**obtain_paths(void)
+static char	**obtain_paths(t_mini_exc *glob)
 {
 	int		i;
 	char	*path;
@@ -52,13 +52,13 @@ static char	**obtain_paths(void)
 	i = 0;
 	path = NULL;
 	paths = NULL;
-	if (environ[i])
+	if (glob->envp[i])
 	{
-		while (environ[i])
+		while (glob->envp[i])
 		{
-			if (is_path(environ[i]))
+			if (is_path(glob->envp[i]))
 			{
-				path = chomp_path(environ[i]);
+				path = chomp_path(glob->envp[i]);
 				break ;
 			}
 			i++;
@@ -118,11 +118,9 @@ int		check_dir_for_cmd(char *env_paths, DIR *dr, char *path, char **command)
 {
 	int				i;
 	char			*tmp;
-	// char			*tmp2;
 	char			*full_path;
 	struct dirent	*dent;
 
-	// tmp2 = NULL;
 	while ((dent = readdir(dr)))
 	{
 		if (ft_strcmp(dent->d_name, path) == 0)
@@ -131,10 +129,8 @@ int		check_dir_for_cmd(char *env_paths, DIR *dr, char *path, char **command)
 			tmp = ft_strjoin(env_paths, "/");
 			full_path = ft_strjoin(tmp, dent->d_name);
 			ft_strdel(&tmp);
-			// tmp2 = all_but_first(command[0]);
 			ft_strdel(&command[0]);
 			command[0] = ft_strdup(full_path);
-			// ft_strdel(&tmp2);
 			ft_strdel(&full_path);
 			closedir(dr);
 			return (1);
@@ -145,7 +141,38 @@ int		check_dir_for_cmd(char *env_paths, DIR *dr, char *path, char **command)
 	return (0);
 }
 
-int		expand_path(char **command)
+static int		check_if_builtin(char *path)
+{
+	char	*tmp;
+	int		i;
+
+	i = 0;
+	while (path[i] != '\0' && path[i] != ' ')
+		i++;
+	tmp = ft_strnew(i);
+	i = 0;
+	while (path[i] != '\0' && path[i] != ' ')
+	{
+		tmp[i] = path[i];
+		i++;
+	}
+	tmp[i] = '\0';
+	if (ft_strcmp(tmp, "exit") == 0)
+		return (1);
+	if (ft_strcmp(tmp, "cd") == 0)
+		return (1);
+	if (ft_strcmp(tmp, "env") == 0)
+		return (1);
+	if (ft_strcmp(tmp, "setenv") == 0)
+		return (1);
+	if (ft_strcmp(tmp, "echo") == 0)
+		return (1);
+	if (ft_strcmp(tmp, "unsetenv") == 0)
+		return (1);
+	return (0);
+}
+
+int		expand_path(t_mini_exc *glob, char **command)
 {
 	char			*path;
 	char			**env_paths;
@@ -158,23 +185,26 @@ int		expand_path(char **command)
 	i = 0;
 	dr = NULL;
 	path = NULL;
-	path = get_path(command[0]);
-	env_paths = obtain_paths();
-	while (env_paths[i])
+	if (check_if_builtin(command[0]) == 0)
 	{
-		st.st_mode = 0;
-		lstat(env_paths[i], &st);
-		if (S_ISDIR(st.st_mode) > 0)
+		path = get_path(command[0]);
+		env_paths = obtain_paths(glob);
+		while (env_paths[i])
 		{
-			dr = opendir(env_paths[i]);
-			if (dr)
+			st.st_mode = 0;
+			lstat(env_paths[i], &st);
+			if (S_ISDIR(st.st_mode) > 0)
 			{
-				ret = check_dir_for_cmd(env_paths[i], dr, path, command);
-				if (ret)
-					break ;
+				dr = opendir(env_paths[i]);
+				if (dr)
+				{
+					ret = check_dir_for_cmd(env_paths[i], dr, path, command);
+					if (ret)
+						break ;
+				}
 			}
+			i++;
 		}
-		i++;
 	}
 	return (ret);
 }

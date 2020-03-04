@@ -6,7 +6,7 @@
 /*   By: tvandivi <tvandivi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/20 13:15:04 by tvandivi          #+#    #+#             */
-/*   Updated: 2020/02/24 11:53:05 by tvandivi         ###   ########.fr       */
+/*   Updated: 2020/03/04 14:29:22 by tvandivi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,12 @@ int		is_home(char *str)
 	return (check_for(str, "HOME="));
 }
 
-char	*get_home()
+int		is_pwd(char *str, char *key)
+{
+	return (check_for(str, key));
+}
+
+char	*get_home(t_mini_exc *glob)
 {
 	int		i;
 	char	*home;
@@ -43,11 +48,11 @@ char	*get_home()
 	i = 0;
 	tmp = NULL;
 	home = NULL;
-	while (environ[i])
+	while (glob->envp[i])
 	{
-		if (is_home(environ[i]))
+		if (is_home(glob->envp[i]))
 		{
-			tmp = ft_strdup(environ[i]);
+			tmp = ft_strdup(glob->envp[i]);
 			home = ft_strnew((ft_strlen(tmp) - 5));
 			ft_strcat(home, &tmp[5]);
 			ft_strdel(&tmp);
@@ -56,6 +61,66 @@ char	*get_home()
 		i++;
 	}
 	return (home);
+}
+
+char	*get_pwd(t_mini_exc *glob)
+{
+	int		i;
+	int		j;
+	char	*home;
+	char	*tmp;
+
+	i = 0;
+	j = 0;
+	tmp = NULL;
+	home = NULL;
+	while (glob->envp[i])
+	{
+		if (is_pwd(glob->envp[i], "PWD="))
+		{
+			tmp = ft_strdup(glob->envp[i]);
+			while (glob->envp[i][j] != '=')
+				j++;
+			if (glob->envp[i][j] == '=')
+				j++;
+			home = ft_strnew((ft_strlen(tmp) - j));
+			ft_strcat(home, &tmp[j]);
+			ft_strdel(&tmp);
+			break ;
+		}
+		i++;
+	}
+	return (home);
+}
+
+char	*get_key(t_mini_exc *glob, char *key)
+{
+	int		i;
+	int		j;
+	char	*ptr;
+	char	*tmp;
+
+	i = 0;
+	j = 0;
+	tmp = NULL;
+	ptr = NULL;
+	while (glob->envp[i])
+	{
+		if (is_pwd(glob->envp[i], key))
+		{
+			tmp = ft_strdup(glob->envp[i]);
+			while (glob->envp[i][j] != '=')
+				j++;
+			if (glob->envp[i][j] == '=')
+				j++;
+			ptr = ft_strnew((ft_strlen(tmp) - j));
+			ft_strcat(ptr, &tmp[j]);
+			ft_strdel(&tmp);
+			break ;
+		}
+		i++;
+	}
+	return (ptr);
 }
 
 char	*create_str(char **line, int len)
@@ -102,7 +167,7 @@ void	build_new(char **line, int len, char *tmp, char *home)
 	}
 }
 
-void	check_for_tilde(char **line)
+void	check_for_tilde(t_mini_exc *glob, char **line)
 {
 	char	*h;
 	char	*tmp;
@@ -110,7 +175,7 @@ void	check_for_tilde(char **line)
 	char	*home;
 
 	h = NULL;
-	home = get_home();
+	home = get_key(glob, "HOME=");
 	len = ft_strlen(home);
 	tmp = NULL;
 	while ((h = ft_strrchr(line[0], '~')))

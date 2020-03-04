@@ -6,64 +6,62 @@
 /*   By: tvandivi <tvandivi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/22 22:07:52 by tvandivi          #+#    #+#             */
-/*   Updated: 2020/02/24 11:21:07 by tvandivi         ###   ########.fr       */
+/*   Updated: 2020/03/03 12:23:48 by tvandivi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/ft_minishell.h"
+
+static void	mini_get_index(int *i, int *stop, int *start, char *cmd)
+{
+	stop[0] = start[0];
+	while (cmd[stop[0]] != '\0')
+	{
+		if (cmd[stop[0]] != ' ')
+			stop[0]++;
+		else
+			break ;
+	}
+	i[0] = ((stop[0] - start[0]));
+	if (i[0] < 0)
+		i[0] *= -1;
+	i[0]++;
+}
+
+static char *mini_build_tmp(char *cmd, int *i, int *start, int *stop)
+{
+	char	*tmp;
+
+	tmp = NULL;
+	tmp = ft_strnew(i[0]);
+	i[0] = 0;
+	while (start[0] < stop[0])
+		tmp[i[0]++] = cmd[start[0]++];
+	if (i[0] > 0)
+		tmp[i[0]] = '\0';
+	return (tmp);
+}
 
 char	*cfds_helper(char *cmd)
 {
 	int		start;
 	int		stop;
 	int		i;
-	char	*tmp;
 
 	start = 0;
 	stop = 0;
 	i = 0;
-	tmp = NULL;
 	while (cmd[start] != '\0' && cmd[start] != '$')
 		start++;
 	if (cmd[start] == '$')
 		start++;
 	else
 		return (NULL);
-	stop = start;
-	while (cmd[stop] != '\0')
-	{
-		if (cmd[stop] >= 'A' && cmd[stop] <= 'Z')
-			stop++;
-		else if (cmd[stop] == '_')
-			stop++;
-		else if (cmd[stop] >= '0' && cmd[stop] <= '9')
-			stop++;
-		else
-			break ;
-	}
-	if (stop > start)
-	{
-		i = ((stop - start) + 1);
-		tmp = ft_strnew(i);
-		i = 0;
-	}
-	else
-	{
-		i = ((start - stop) + 1);
-		tmp = ft_strnew(i);
-		i = 0;
-	}
-	while (start < stop)
-	{
-		tmp[i++] = cmd[start];
-		start++;
-	}
-	if (i > 0)
-		tmp[i] = '\0';
-	return (tmp);
+	mini_get_index(&i, &stop, &start, cmd);
+	return (mini_build_tmp(cmd, &i, &start, &stop));
 }
 
-char	*compare_environ(char *tmp)
+char	*compare_environ(t_mini_exc *glob, char *tmp)
 {
 	int		start;
 	char	*ptr;
@@ -72,11 +70,12 @@ char	*compare_environ(char *tmp)
 	start = 0;
 	ptr = NULL;
 	exp = NULL;
-	while (environ[start])
+	while (glob->envp[start])
 	{
-		if (ft_strcmp(tmp, (ptr = grab_key(environ[start]))) == 0)
+		if (ft_strcmp(tmp, (ptr = grab_key(glob->envp[start]))) == 0)
 		{
-			exp = grab_value(environ[start]);
+			exp = grab_value(glob->envp[start]);
+			ft_strdel(&ptr);
 			break ;
 		}
 		ft_strdel(&ptr);
@@ -140,6 +139,7 @@ char	*copy_before(char *cmd, int *i)
 		i[0]++;
 	}
 	tmp2[i[0]] = '\0';
+	i[0]++;
 	return (tmp2);
 }
 
@@ -159,7 +159,6 @@ void	expresion_found(char *cmd, char *exp, char **command)
 	tmp = NULL;
 	tmp2 = NULL;
 	tmp2 = copy_before(cmd, &i);
-	i++;
 	tmp = ft_strjoin(tmp2, exp);
 	ft_strdel(&exp);
 	ft_strdel(&tmp2);
@@ -189,22 +188,21 @@ void	bad_expression(char *cmd, char **command)
 	char	*tmp;
 
 	ptr = NULL;
-	i = 0;
+	i = -1;
 	j = 0;
 	while (cmd[j] != '\0' && cmd[j] != '$')
 		j++;
 	tmp2 = ft_strnew((j + 1));
-	while (i < j)
-	{
+	while (i++ < (j - 1))
 		tmp2[i] = cmd[i];
-		i++;
-	}
 	tmp2[i] = '\0';
 	i = 0;
 	j++;
 	if ((ptr = ft_strrchr(command[0], '$')))
 	{
 		i = find_var_index(j, cmd);
+		while (cmd[i] != ' ' && cmd[i] != '\0')
+			i++;
 		tmp = ft_strdup(&cmd[i]);
 		ft_strdel(command);
 		command[0] = ft_strjoin(tmp2, tmp);
@@ -213,7 +211,7 @@ void	bad_expression(char *cmd, char **command)
 	}
 }
 
-void	check_for_dollar_sign(char **command)
+void	check_for_dollar_sign(t_mini_exc *glob, char **command)
 {
 	char	*cmd;
 	char	*ptr;
@@ -230,11 +228,12 @@ void	check_for_dollar_sign(char **command)
 		tmp = cfds_helper(cmd);
 		if (!(tmp))
 			return ;
-		exp = compare_environ(tmp);
+		exp = compare_environ(glob, tmp);
 		ft_strdel(&tmp);
 		if (exp)
 			expresion_found(cmd, exp, command);
 		else
 			bad_expression(cmd, command);
+		ptr = NULL;
 	}
 }
