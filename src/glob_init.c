@@ -6,7 +6,7 @@
 /*   By: tvandivi <tvandivi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/20 12:05:49 by tvandivi          #+#    #+#             */
-/*   Updated: 2020/03/03 12:08:40 by tvandivi         ###   ########.fr       */
+/*   Updated: 2020/03/06 11:32:46 by tvandivi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,9 +17,9 @@ void	init_mini_glob(t_mini_exc *glob)
 	glob->envp = copy_environ();
 	glob->proc_tab = NULL;
 	glob->i = 0;
-	glob->history_size = 1000;
-	glob->history = (char **)malloc(sizeof(char *) * glob->history_size);
-	while (glob->i < 1000)
+	glob->history_size = HIST_SIZE;
+	glob->history = (char **)malloc(sizeof(char *) * (glob->history_size + 1));
+	while (glob->i < (HIST_SIZE + 1))
 		glob->history[glob->i++] = NULL;
 	glob->glob_pid = 0;
 	glob->pid = 0;

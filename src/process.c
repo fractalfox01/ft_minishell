@@ -6,7 +6,7 @@
 /*   By: tvandivi <tvandivi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/20 12:22:08 by tvandivi          #+#    #+#             */
-/*   Updated: 2020/03/05 09:34:39 by tvandivi         ###   ########.fr       */
+/*   Updated: 2020/03/11 12:14:19 by tvandivi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -260,23 +260,6 @@ char	*ft_sentencetrim(char *str)
 	return (ret);
 }
 
-int		check_if_builtin(char *path)
-{
-	if (ft_strcmp(path, "exit") == 0)
-		return (1);
-	if (ft_strcmp(path, "cd") == 0)
-		return (1);
-	if (ft_strcmp(path, "env") == 0)
-		return (1);
-	if (ft_strcmp(path, "setenv") == 0)
-		return (1);
-	if (ft_strcmp(path, "echo") == 0)
-		return (1);
-	if (ft_strcmp(path, "unsetenv") == 0)
-		return (1);
-	return (0);
-}
-
 int		check_for_ampersand(char **str)
 {
 	int 	ret;
@@ -418,6 +401,105 @@ void	proc_init(t_proc *proc, char *command)
 	proc->tab = ft_strsplit(proc->trimmed, ';');
 }
 
+void	save_proc_1(t_proc *proc, t_mini_exc *glob, int *status)
+{
+	if (proc->av)
+		proc->av = NULL;
+	proc->av = get_args(proc->tab[proc->var_int[0]]);
+	if (proc->ep)
+		proc->ep = NULL;
+	proc->ep = get_env(glob);
+	if (proc->var_int[0] == 0)
+	{
+		proc->node = init_node();
+		proc->root = proc->node;
+	}
+	proc->node->path = ft_strdup(proc->path);
+	if (proc->var_int[2])
+	{
+		proc->node->ampersand = 1;
+		proc->var_int[2] = 0;
+	}
+	ft_strdel(&proc->path);
+	proc->node->status = status[0];
+	status[0] = 0;
+	proc->node->argv = proc->av;
+	proc->node->envp = proc->ep;
+	proc->c = NULL;
+	if (proc->tab[proc->var_int[0] + 1])
+	{
+		proc->node->next = init_node();
+		proc->node = proc->node->next;
+	}
+	else
+		proc->node->next = NULL;
+}
+
+void	save_proc_2(t_proc *proc, t_mini_exc *glob, int *status)
+{
+	if (proc->av)
+		proc->av = NULL;
+	proc->av = get_args(proc->tab[proc->var_int[0]]);
+	if (proc->ep)
+		proc->ep = NULL;
+	proc->ep = get_env(glob);
+	if (proc->var_int[0] == 0)
+	{
+		proc->node = init_node();
+		proc->root = proc->node;
+	}
+	proc->home = mini_get_home(glob);
+	proc->tmp = ft_strjoin((proc->home + 5), "/");
+	proc->node->path = ft_strdup(proc->path);
+	ft_strdel(&proc->home);
+	ft_strdel(&proc->tmp);
+	if (proc->var_int[2])
+	{
+		proc->node->ampersand = 1;
+		proc->var_int[2] = 0;
+	}
+	ft_strdel(&proc->path);
+	proc->node->argv = proc->av;
+	proc->node->envp = proc->ep;
+	proc->node->status = status[0];
+	proc->c = NULL;
+	if (proc->tab[proc->var_int[0] + 1])
+	{
+		proc->node->next = init_node();
+		proc->node = proc->node->next;
+	}
+	else
+		proc->node->next = NULL;
+
+}
+
+void	print_command_error(char *path)
+{
+	ft_putstr_fd("ft_minishell: command not found: [", 2);
+	ft_putstr_fd(path, 2);
+	ft_putstr_fd("]\n", 2);
+}
+
+void	create_proc(t_mini_exc *glob, t_proc *proc, int	*status)
+{
+	proc->var_int[2] = check_for_ampersand(&proc->tab[proc->var_int[0]]);
+	check_for_tilde(glob, &proc->tab[proc->var_int[0]]);
+	check_for_dollar_sign(glob, &proc->tab[proc->var_int[0]]);
+	proc->trimmed = ft_sentencetrim(proc->tab[proc->var_int[0]]);
+	ft_strdel(&(proc->tab[proc->var_int[0]]));
+	proc->tab[proc->var_int[0]] = ft_strdup(proc->trimmed);
+	ft_strdel(&proc->trimmed);
+	proc->path = get_path(proc->tab[proc->var_int[0]]);
+	proc->var_int[1] = expand_path(glob, &proc->path, status);
+	if (proc->var_int[1] || check_if_builtin(proc->path))
+		save_proc_1(proc, glob, status);
+	else if (check_if_exacutable(glob, proc->path) == 1)
+		save_proc_2(proc, glob, status);
+	else
+		print_command_error(proc->path);
+	proc->var_int[0]++;
+}
+
 t_plst *new_process(t_mini_exc *glob, char *command)
 {
 	t_proc	proc;
@@ -432,91 +514,7 @@ t_plst *new_process(t_mini_exc *glob, char *command)
 	{
 		while (proc.tab[proc.var_int[0]])
 		{
-			proc.var_int[2] = check_for_ampersand(&proc.tab[proc.var_int[0]]);
-			check_for_tilde(glob, &proc.tab[proc.var_int[0]]);
-			check_for_dollar_sign(glob, &proc.tab[proc.var_int[0]]);
-			proc.trimmed = ft_sentencetrim(proc.tab[proc.var_int[0]]);
-			ft_strdel(&(proc.tab[proc.var_int[0]]));
-			proc.tab[proc.var_int[0]] = ft_strdup(proc.trimmed);
-			ft_strdel(&proc.trimmed);
-			proc.path = get_path(proc.tab[proc.var_int[0]]);
-			proc.var_int[1] = expand_path(glob, &proc.path, &status);
-			if (proc.var_int[1] || check_if_builtin(proc.path))
-			{
-				if (proc.av)
-					proc.av = NULL;
-				proc.av = get_args(proc.tab[proc.var_int[0]]);
-				if (proc.ep)
-					proc.ep = NULL;
-				proc.ep = get_env(glob);
-				if (proc.var_int[0] == 0)
-				{
-					proc.node = init_node();
-					proc.root = proc.node;
-				}
-				proc.node->path = ft_strdup(proc.path);
-				if (proc.var_int[2])
-				{
-					proc.node->ampersand = 1;
-					proc.var_int[2] = 0;
-				}
-				ft_strdel(&proc.path);
-				proc.node->status = status;
-				status = 0;
-				proc.node->argv = proc.av;
-				proc.node->envp = proc.ep;
-				proc.c = NULL;
-				if (proc.tab[proc.var_int[0] + 1])
-				{
-					proc.node->next = init_node();
-					proc.node = proc.node->next;
-				}
-				else
-					proc.node->next = NULL;
-			}
-			else if (check_if_exacutable(glob, proc.path))
-			{
-				if (proc.av)
-					proc.av = NULL;
-				proc.av = get_args(proc.tab[proc.var_int[0]]);
-				if (proc.ep)
-					proc.ep = NULL;
-				proc.ep = get_env(glob);
-				if (proc.var_int[0] == 0)
-				{
-					proc.node = init_node();
-					proc.root = proc.node;
-				}
-				proc.home = mini_get_home(glob);
-				proc.tmp = ft_strjoin((proc.home + 5), "/");
-				proc.node->path = ft_strdup(proc.path);
-				ft_strdel(&proc.home);
-				ft_strdel(&proc.tmp);
-				if (proc.var_int[2])
-				{
-					proc.node->ampersand = 1;
-					proc.var_int[2] = 0;
-				}
-				ft_strdel(&proc.path);
-				proc.node->argv = proc.av;
-				proc.node->envp = proc.ep;
-				proc.node->status = status;
-				proc.c = NULL;
-				if (proc.tab[proc.var_int[0] + 1])
-				{
-					proc.node->next = init_node();
-					proc.node = proc.node->next;
-				}
-				else
-					proc.node->next = NULL;
-			}
-			else
-			{
-				ft_putstr_fd("ft_minishell: command not found: ", 2);
-				ft_putstr_fd(proc.path, 2);
-				ft_putstr_fd("\n", 2);
-			}
-			proc.var_int[0]++;
+			create_proc(glob, &proc, &status);
 		}		
 	}
 	return (proc.root);

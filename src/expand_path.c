@@ -6,7 +6,7 @@
 /*   By: tvandivi <tvandivi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/23 17:33:57 by tvandivi          #+#    #+#             */
-/*   Updated: 2020/03/05 09:27:48 by tvandivi         ###   ########.fr       */
+/*   Updated: 2020/03/11 11:33:48 by tvandivi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -141,7 +141,7 @@ int		check_dir_for_cmd(char *env_paths, DIR *dr, char *path, char **command)
 	return (0);
 }
 
-static int		check_if_builtin(char *path)
+static int		check_if_builtin2(char *path)
 {
 	char	*tmp;
 	int		i;
@@ -157,24 +157,14 @@ static int		check_if_builtin(char *path)
 		i++;
 	}
 	tmp[i] = '\0';
-	if (ft_strcmp(tmp, "exit") == 0)
-		return (1);
-	if (ft_strcmp(tmp, "cd") == 0)
-		return (1);
-	if (ft_strcmp(tmp, "env") == 0)
-		return (1);
-	if (ft_strcmp(tmp, "setenv") == 0)
-		return (1);
-	if (ft_strcmp(tmp, "echo") == 0)
-		return (1);
-	if (ft_strcmp(tmp, "unsetenv") == 0)
-		return (1);
-	return (0);
+	i = check_if_builtin(tmp);
+	ft_strdel(&tmp);
+	return (i);
 }
 
 // needs status int to flag if found in path and expanded; checked against while comparing if binary builting or => 'not a command' <=
 // currently if not a command, still gets sent through to execve and waitpid.
-// I don't want to wait for a non existant command, I holds up other things.
+// I don't want to wait for a non existant command, It holds up other things.
 int		expand_path(t_mini_exc *glob, char **command, int *status)
 {
 	char			*path;
@@ -188,7 +178,7 @@ int		expand_path(t_mini_exc *glob, char **command, int *status)
 	i = 0;
 	dr = NULL;
 	path = NULL;
-	if (check_if_builtin(command[0]) == 0)
+	if (check_if_builtin2(command[0]) == 0)
 	{
 		path = get_path(command[0]);
 		env_paths = obtain_paths(glob);
@@ -211,6 +201,8 @@ int		expand_path(t_mini_exc *glob, char **command, int *status)
 			}
 			i++;
 		}
+		ft_free_2d(&env_paths);
+		ft_strdel(&path);
 	}
 	return (ret);
 }

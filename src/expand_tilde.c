@@ -6,7 +6,7 @@
 /*   By: tvandivi <tvandivi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/20 13:15:04 by tvandivi          #+#    #+#             */
-/*   Updated: 2020/03/05 11:40:47 by tvandivi         ###   ########.fr       */
+/*   Updated: 2020/03/11 11:38:13 by tvandivi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,7 +93,46 @@ char	*get_pwd(t_mini_exc *glob)
 	return (home);
 }
 
-char	*get_key(t_mini_exc *glob, char *key)
+/*
+** check_for_key: check for key returns the index of key if found in the environment table
+*/
+
+int	check_for_key(t_mini_exc *glob, char *key)
+{
+	int		i;
+	int		j;
+	int		len;
+	// char	*ptr;
+	char	*tmp;
+
+	i = 0;
+	j = 0;
+	len = 0;
+	tmp = NULL;
+	// ptr = NULL;
+	while (glob->envp[i])
+	{
+		if (is_pwd(glob->envp[i], key))
+		{
+			tmp = ft_strdup(glob->envp[i]);
+			while (glob->envp[i][j] != '=')
+				j++;
+			if (glob->envp[i][j] == '=')
+				j++;
+			len = (j - ft_strlen(tmp));
+			if (len < 0)
+				len *= -1;
+			// ptr = ft_strnew(len);
+			// ptr = ft_strncpy(ptr, tmp, len);
+			ft_strdel(&tmp);
+			break ;
+		}
+		i++;
+	}
+	return i;
+}
+
+char	*get_value(t_mini_exc *glob, char *key)
 {
 	int		i;
 	int		j;
@@ -175,7 +214,7 @@ void	check_for_tilde(t_mini_exc *glob, char **line)
 	char	*home;
 
 	h = NULL;
-	home = get_key(glob, "HOME=");
+	home = get_value(glob, "HOME=");
 	len = ft_strlen(home);
 	tmp = NULL;
 	while ((h = ft_strrchr(line[0], '~')))
