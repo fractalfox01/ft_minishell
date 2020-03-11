@@ -6,7 +6,7 @@ SRC := $(addsuffix .c, src/glob_init src/process src/startshell src/expand_tilde
 
 INC := $(addsuffix .h, includes/ft_minishell includes/libft)
 
-FLAGS= -Wall -Werror -Wextra -Wunused-value -fsanitize=address -Wno-unused-variable -Werror=unused-but-set-variable -Werror=pointer-compare
+FLAGS= -Wall -Werror -Wextra -Wunused-value -fsanitize=address -Wno-unused-variable
 
 $(NAME):
 	@make -C libft/ re
@@ -15,20 +15,17 @@ $(NAME):
 
 $(TEST): fc
 	@make -C libft/ re
-	@rm -r shelltesting.dSYM 2>/dev/null | echo "deleted"
-	@rm shelltesting 2>/dev/null | echo deleted
 	@gcc -g $(FLAGS) src/builtins.c src/expand_dollar.c src/expand_path.c src/expand_tilde.c src/glob_init.c src/process.c src/shell_history.c src/start_utils.c src/mini_environ.c test.c libft/libft.a -o shelltesting
 
 all: $(NAME)
 
 clean:
-	rm $(NAME) 2>/dev/null | echo "Gone"
-	rm -rf $(NAME).dSYM/ 2>/dev/null | echo "Gone"
-	rm test 2>/dev/null | echo "Gone"
-	rm -rf test.dSYM/ 2>/dev/null | echo "Gone"
+	@rm $(NAME) 2>/dev/null | echo "No binary to remove"
 	@make -C libft/ clean
 
 fclean: clean
+	@rm shelltesting | echo "testing binary removed"
+	@rm -r shelltesting.dSYM | echo "testing data removed"
 	@rm libft.a | echo "libft.a gone"
 	@make -C libft/ fc
 

@@ -6,7 +6,7 @@
 /*   By: tvandivi <tvandivi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/29 10:47:56 by tvandivi          #+#    #+#             */
-/*   Updated: 2020/03/04 14:49:36 by tvandivi         ###   ########.fr       */
+/*   Updated: 2020/03/05 20:36:19 by tvandivi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,11 +16,13 @@ char	*back_one(t_mini_exc *glob)
 {
 	int		i;
 	int		j;
+	int		c;
 	char	*tmp;
 	char	*pwd;
 
 	i = 0;
 	j = 0;
+	c = 0;
 	tmp = NULL;
 	while (glob->envp[i])
 	{
@@ -33,7 +35,17 @@ char	*back_one(t_mini_exc *glob)
 				tmp = ft_strdup(&glob->envp[i][4]);
 				i = 0;
 				while (tmp[i] != '\0')
+				{
+					if (tmp[i] == '/')
+						c++;
 					i++;
+				}
+				if (c == 1)
+				{
+					pwd = ft_strdup("/");
+					ft_strdel(&tmp);
+					return (pwd);
+				}
 				while (tmp[i] != '/' && i > 0)
 					i--;
 				pwd = ft_strnew((i + 1));
@@ -73,6 +85,51 @@ void	change_pwd(t_mini_exc *glob, char *pwd)
 	}
 }
 
+void	change_key(t_mini_exc *glob, char *pwd, char *key)
+{
+	int	i;
+	int	j;
+	int	n;
+	int	len;
+	int	count;
+
+	i = 0;
+	j = 0;
+	n = 0;
+	len = 0;
+	count = 0;
+	while (key[len] != '\0')
+		len++;
+	while (glob->envp[i])
+	{
+		while (glob->envp[i][j] != '\0' && j < len)
+			j++;
+		if (j == len)
+		{
+			while (key[n] != '\0')
+			{
+				if (glob->envp[i][n] == key[n])
+					count++;
+				else
+					break ;
+				n++;
+			}
+			if (count == len)
+			{
+				free(glob->envp[i]);
+				glob->envp[i] = NULL;
+				glob->envp[i] = ft_strjoin(key, pwd);
+				return ;
+			}
+			count = 0;
+		}
+		n = 0;
+		j = 0;
+		i++;
+	}
+}
+
+
 char	*mini_get_env(char *env)
 {
 	int		i;
@@ -95,32 +152,6 @@ char	*mini_get_env(char *env)
 	}
 	return (tmp);
 }
-
-// int		helper_check(int *f1, int *f2, char *hstack)
-// {
-// 	int	i;
-// 	int	len;
-
-// 	i = 0;
-// 	len = 0;
-// 	while (hstack[i] != '\0')
-// 	{
-// 		if ((i % 3) == 0 && i >= 2)
-// 		{
-// 			if (hstack[i - 2] == '.' && hstack[i - 1] == '.' && hstack[i - 0] == '/')
-// 			{
-// 				f1[0] = (i - 2);
-// 				f2[0] = i;
-// 				len -= 3;
-// 			}
-// 			else
-// 				len++;
-// 		}
-// 		else
-// 			len++;
-// 		i++;
-// 	}
-// }
 
 char	*ft_removestr(char *hstack, char *needle)
 {
@@ -195,107 +226,127 @@ char	*chomp_last(char *pwd)
 	return (ret);
 }
 
+int		ft_2dlen(char **tab)
+{
+	int	ret;
+
+	ret = 0;
+	while (tab[ret])
+		ret++;
+	return (ret);
+}
+
+int		validate_cd_command(int size)
+{
+	int	ret;
+
+	ret = 0;
+	if (size > 2)
+	{
+		ft_putstr_fd("builtin cd: too many arguments\n", 2);
+		ret = 1;
+	}
+	else if (size == 1)
+		ret = 2;
+	return (ret);
+}
+
+int		check_cd_basic(t_mini_exc *glob, char *path)
+{
+	char	*pwd;
+	int		i;
+	int		count;
+	char	cwd[1024];
+	char	old[1024];
+
+	pwd = NULL;
+	i = 0;
+	count = 0;
+	ft_memset(cwd, '\0', 1024);
+	ft_memset(old, '\0', 1024);
+	if ((ft_strcmp(path, ".") == 0) || (ft_strcmp(path, "..") == 0))
+	{
+		if (ft_strcmp(path, "..") == 0)
+		{
+			getcwd(old, 1024);
+			while (old[i] != '\0')
+			{
+				if (old[i] == '/')
+					count++;
+				i++;
+			}
+			if (count <= 1)
+				pwd = ft_strdup("/");
+			else
+			{
+				while ((i > 0) && (old[i] != '/'))
+					i--;
+				if (i != 0 && old[i] == '/')
+				{
+					pwd = ft_strnew(i);
+					pwd = ft_strncpy(pwd, old, i);
+				}
+				else if (i == 0 || old[i] == '/')
+					pwd = ft_strdup("/");
+			}
+			if (chdir(pwd) == 0)
+			{
+				change_key(glob, old, "OLDPWD=");
+				getcwd(cwd, 1024);
+				change_key(glob, cwd, "PWD=");
+				ft_strdel(&path);
+			}
+		}
+		else
+		{
+			getcwd(old, 1024);
+			change_key(glob, old, "OLDPWD=");
+			getcwd(cwd, 1024);
+			change_key(glob, cwd, "PWD=");
+			ft_strdel(&path);
+		}
+		return (1);
+	}
+	return (0);
+}
+
 void	mini_changedir(t_mini_exc *glob, t_plst *node)
 {
 	char	cwd[1024];
-	char	*pwd;
-	// char	*pwd;
-	char	*tmp;
-	char	*tmp2;
-	char	*new_pwd;
+	char	old[1024];
+	char	*path;
+	char	*newpwd;
 	int		i;
 
-	i = 0;
-	pwd = NULL;
-	tmp = NULL;
-	tmp2 = NULL;
-	new_pwd = NULL;
-	ft_memset(cwd, 0, 1024);
-	getcwd(cwd, 1024);
-	while (node->argv[i])
-		i++;
-	if (i > 2)
-		return (ft_putstr("builtin cd: too many arguments\n"));
-	if (i == 1)
-		return ;
-	if ((ft_strcmp(node->argv[1], ".") == 0) || (ft_strcmp(node->argv[1], "..") == 0))
+	i = ft_2dlen(node->argv);
+	newpwd = NULL;
+	path = NULL;
+	ft_memset(cwd, '\0', 1024);
+	ft_memset(old, '\0', 1024);
+	if (validate_cd_command(i) == 0 && node->argv[1])
 	{
-		if (ft_strcmp(node->argv[1], "..") == 0)
+		path = ft_strdup(node->argv[1]);
+		if (check_cd_basic(glob, path))
+			return ;
+		getcwd(old, 1024);
+		if (chdir(path) == 0)
 		{
-			pwd = back_one(glob);
-			if (chdir(pwd) == 0)
-			{
-				change_pwd(glob, pwd);
-				ft_strdel(&pwd);
-				ft_bzero(cwd, 1024);
-			}
-		}
-		return ;
-	}
-	ft_bzero(cwd, 1024);
-	pwd = get_key(glob, "PWD=");
-	i = 0;
-	while (node->argv[1][i] != '\0')
-		i++;
-	while ((new_pwd = ft_removestr(node->argv[1], "../")))
-	{
-		ft_strdel(&node->argv[1]);
-		node->argv[1] = ft_strdup(new_pwd);
-		tmp = chomp_last(pwd);
-		if (tmp)
-		{
-			ft_strdel(&pwd);
-			pwd = ft_strdup(tmp);
-			ft_strdel(&tmp);
-		}
-		else
-			pwd = ft_strdup("/");
-		ft_strdel(&new_pwd);
-	}
-	if (!(new_pwd))
-	{
-		if (node->argv[1])
-		{
-			i = ft_strlen(pwd);
-			if (node->argv[1][0] == '/' || pwd[(i - 1)] == '/')
-			{
-				if (node->argv[1][0] == '/')
-					tmp = ft_strjoin(pwd, &(node->argv[1][1]));
-				else
-					tmp = ft_strjoin(pwd, node->argv[1]);
-				ft_strdel(&pwd);
-				pwd = ft_strdup(tmp);
-				ft_strdel(&tmp);
-			}
-			else
-			{
-				tmp = ft_strjoin(pwd, "/");
-				tmp2 = ft_strjoin(tmp, node->argv[1]);
-				ft_strdel(&pwd);
-				pwd = ft_strdup(tmp2);
-				ft_strdel(&tmp);
-				ft_strdel(&tmp2);
-			}
+			change_key(glob, old, "OLDPWD=");
+			getcwd(cwd, 1024);
+			change_key(glob, cwd, "PWD=");
+			ft_strdel(&path);
 		}
 	}
-	if (chdir(pwd) == 0)
-	{
-		change_pwd(glob, pwd);
-		// ft_strdel(&tmp);
-		ft_strdel(&pwd);
-	}
+	if (node->argv[1])
+		path = ft_strdup(node->argv[1]);
+	else
+		path = ft_strdup(".");
 }
 
-void	mini_print_env(t_mini_exc *glob, t_plst *node)
+void	mini_print_env(t_mini_exc *glob)
 {
 	int	i;
 
-	i = 0;
-	printf("mini env:\n");
-	while (node->argv[i])
-		i++;
-	if (i > 1)
-		return ;
 	i = 0;
 	while (glob->envp[i])
 	{
@@ -325,76 +376,110 @@ char	**copy_remainder(t_mini_exc *glob, int size)
 	return (tab);
 }
 
-void	mini_set_env(t_mini_exc *glob, t_plst *node)
+char	*retrieve_key(t_mini_exc *glob, char *t_key)
 {
 	int		i;
 	int		j;
-	int		k;
-	int		p;
-	int		m;
+	int		len;
 	char	*tmp;
-	char	*t;
-	char	**remainder;
 
-	remainder = NULL;
 	i = 0;
 	j = 0;
-	k = 0;
-	p = 0;
-	m = 0;
-	t = NULL;
+	len = ft_strlen(t_key);
+	tmp = 0;
+	while (glob->envp[i])
+	{
+		while (glob->envp[i][j] == t_key[j])
+			j++;
+		if (len == j)
+			return (ft_strdup(t_key));
+		else
+			j = 0;
+		i++;
+	}
+	return (NULL);
+}
+
+void	mini_update_env(t_mini_exc *glob, char *key, char *valu)
+{
+	int		i;
+	int		j;
+	int		len;
+	char	*tmp;
+	char	*t_key;
+	
+	i = 0;
+	j = 0;
 	tmp = NULL;
+	t_key = ft_strjoin(key, "=");
+	len = ft_strlen(t_key) - 1;
+	if ((tmp = retrieve_key(glob, t_key)))
+	{
+		ft_strdel(&tmp);
+		while (glob->envp[i])
+		{
+			while (glob->envp[i][j] != '\0' && (glob->envp[i][j] != '=' && (j < len)))
+				j++;
+			if (glob->envp[i][j] == '=')
+			{
+				if (j == len)
+				{
+					tmp = ft_strnew(j);
+					tmp = ft_strncpy(tmp, glob->envp[i], j);
+					if (ft_strcmp(tmp, key) == 0)
+					{
+						ft_strdel(&tmp);
+						ft_strdel(&glob->envp[i]);
+						glob->envp[i] = ft_strjoin(t_key, valu);
+						break ;
+					}
+					ft_strdel(&tmp);
+				}
+			}
+			j = 0;
+			i++;
+		}
+	}
+	else
+	{
+		printf("pretending to add new key and value...\n");
+		// append_key();
+	}
+	ft_strdel(&t_key);
+}
+
+void	mini_set_env(t_mini_exc *glob, t_plst *node)
+{
+	int		i;
+	
+	i = 0;
+	
 	while (node->argv[i])
 		i++;
 	if (i == 3)
-	{
-		while (glob->envp[j])
-		{
-			t = mini_get_env(glob->envp[j]);
-			if ((t && ft_strcmp(node->argv[1], t) == 0))
-			{
-				remainder = copy_remainder(glob, j);
-				ft_strdel(&t);
-				printf("setting: %s to %s\n", node->argv[1], node->argv[2]);
-				while (glob->envp[j][k] != '\0' && glob->envp[j][k] != '=')
-					k++;
-				printf("before: %s\n", glob->envp[j]);
-				while (glob->envp[j][k] != '\0')
-					glob->envp[j][k++] = '\0';
-				printf("after: %s\n", glob->envp[j]);
-				tmp = ft_strjoin(node->argv[1], "=");
-				t = ft_strjoin(tmp, node->argv[2]);
-				printf("t is %s\n", t);
-				ft_memcpy(glob->envp[j], t, ft_strlen(t));
-				ft_strdel(&tmp);
-				ft_strdel(&t);
-				j++;
-				k = 0;
-				break ;
-			}
-			ft_strdel(&t);
-			j++;
-		}
-		while (glob->envp[j])
-		{
-			while (glob->envp[j][k] != '\0')
-				k++;
-			k = 0;
-			while (remainder[m][p] != '\0')
-				glob->envp[j][k++] = remainder[m][p++];
-			j++;
-			k = 0;
-			m++;
-			p = 0;
-		}
-	}
+		mini_update_env(glob, node->argv[1], node->argv[2]);
+		// printf("sets %s to %s\n", node->argv[1], node->argv[2]);
 	else if (i == 2)
 		printf("clearing %s, if found\n", node->argv[1]);
 	else if (i == 1)
-		mini_print_env(glob, node);
+		mini_print_env(glob);
 	else
 		ft_putstr_fd("setenv: no\n", 2);
 	
+}
+
+void	mini_echo(t_mini_exc *glob, t_plst *node)
+{
+	int	i;
+
+	i = 1;
+	while (node->argv[i] && glob)
+	{
+		ft_putstr(node->argv[i++]);
+		if (node->argv[i])
+			ft_putchar(' ');
+	}
+	ft_putchar('\n');
 }
 
 void	run_builtin(t_mini_exc *glob, t_plst *node)
@@ -408,13 +493,11 @@ void	run_builtin(t_mini_exc *glob, t_plst *node)
 	if (ft_strcmp(node->path, "cd") == 0)
 		mini_changedir(glob, node);
 	if (ft_strcmp(node->path, "env") == 0)
-		mini_print_env(glob, node);
+		mini_print_env(glob);
 	if (ft_strcmp(node->path, "setenv") == 0)
 		mini_set_env(glob, node);
 	if (ft_strcmp(node->path, "echo") == 0)
-	{
-
-	}
+		mini_echo(glob, node);
 	if (ft_strcmp(node->path, "unsetenv") == 0)
 	{
 

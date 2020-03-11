@@ -6,7 +6,7 @@
 /*   By: tvandivi <tvandivi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/22 22:07:52 by tvandivi          #+#    #+#             */
-/*   Updated: 2020/03/03 12:23:48 by tvandivi         ###   ########.fr       */
+/*   Updated: 2020/03/05 20:11:10 by tvandivi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -211,6 +211,22 @@ void	bad_expression(char *cmd, char **command)
 	}
 }
 
+char	*expand_bracket(char *cmd, char *exp, char **command)
+{
+	char	*ret;
+	int		i;
+	int		j;
+
+	ret = NULL;
+	i = 0;
+	j = 0;
+	if (cmd && exp && command)
+	{
+		
+	}
+	return (ret);
+}
+
 void	check_for_dollar_sign(t_mini_exc *glob, char **command)
 {
 	char	*cmd;
@@ -233,7 +249,14 @@ void	check_for_dollar_sign(t_mini_exc *glob, char **command)
 		if (exp)
 			expresion_found(cmd, exp, command);
 		else
-			bad_expression(cmd, command);
+		{
+			if ((exp = expand_bracket(cmd, exp, command)))
+			{
+
+			}
+			else
+				bad_expression(cmd, command);
+		}
 		ptr = NULL;
 	}
 }

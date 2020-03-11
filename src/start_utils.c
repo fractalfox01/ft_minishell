@@ -6,7 +6,7 @@
 /*   By: tvandivi <tvandivi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/03/02 14:42:07 by tvandivi          #+#    #+#             */
-/*   Updated: 2020/03/02 15:25:51 by tvandivi         ###   ########.fr       */
+/*   Updated: 2020/03/05 09:41:34 by tvandivi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,11 +38,11 @@ static int		check_if_builtin(char *path)
 
 void	mini_run_normal(t_mini_exc *glob, t_plst *node)
 {
-	if (check_if_builtin(node->path) == 0)
+	if ((check_if_builtin(node->path) == 0) && node->status)
 	{
 		glob->pid = fork();
 		if (glob->pid == 0)
-			execve(node->path, node->argv, node->envp);
+			execve(node->path, node->argv, glob->envp);
 		else if (glob->pid < 0)
 			perror("Process Failed");
 		else
@@ -61,24 +61,6 @@ void	add_new_proc(t_mini_exc *glob)
 		glob->proc_tab = (int **)malloc(sizeof(int *) * 1);
 		glob->proc_tab[0][0] = glob->glob_pid; 
 	}
-}
-
-void	mini_run_w_ampersand(t_mini_exc *glob, t_plst *node)
-{
-	glob->wpid = fork();
-	if (glob->wpid == 0)
-		execve(node->path, node->argv, node->envp);
-	else if (glob->wpid < 0)
-		perror("Process Failed");
-	else if (glob->wpid > 0)
-	{
-		ft_putchar('[');
-		ft_putnbr(glob->flag);
-		ft_putstr("] ");
-		ft_putnbr(glob->wpid);
-		ft_putchar('\n');
-	}
-		// waitpid(glob->wpid, &glob->status, WUNTRACED);
 }
 
 void	init_proc(t_plst **procs, int amount)

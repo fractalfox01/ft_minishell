@@ -17,6 +17,7 @@ typedef struct				s_process_list
 	char					*path;
 	char					**argv;
 	char					**envp;
+	int						status;
 	int						ampersand;
 	struct s_process_list	*next;
 }							t_plst;
@@ -66,13 +67,14 @@ void	start_minishell(t_mini_exc *glob);
 void	free_process(t_plst **process);
 void	check_for_tilde(t_mini_exc *glob, char **line);
 void	check_for_dollar_sign(t_mini_exc *glob, char **command);
-int		expand_path(t_mini_exc *glob, char **command);
+int		expand_path(t_mini_exc *glob, char **command, int *status);
 void	run_builtin(t_mini_exc *glob, t_plst *node);
 void    update_history(t_mini_exc *glob, char *line);
 char	**copy_environ();
 char	*get_home(t_mini_exc *glob);
 char	*get_pwd(t_mini_exc *glob);
 char	*get_key(t_mini_exc *glob, char *key);
+char	**ft_2d_tab(size_t size);
 
 // /*
 // ** minishell utility functions

@@ -6,7 +6,7 @@
 /*   By: tvandivi <tvandivi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/02/20 12:22:08 by tvandivi          #+#    #+#             */
-/*   Updated: 2020/03/03 12:32:58 by tvandivi         ###   ########.fr       */
+/*   Updated: 2020/03/05 09:34:39 by tvandivi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -140,8 +140,12 @@ char	*grab_value(char *str)
 {
 	char	*ret;
 	int		i;
+	int		j;
+	int		len;
 
 	i = 0;
+	j = 0;
+	len = 0;
 	ret = NULL;
 	while (str[i] != '\0' && str[i] != '=')
 		i++;
@@ -202,10 +206,16 @@ char	*ft_sentencetrim(char *str)
 	int		len;
 	char	*tmp;
 	char	*ret;
+	int		c_btw;
+	int		ampersand;
+	int		semicolon;
 
 	i = 0;
 	j = 0;
 	k = 0;
+	ampersand = 0;
+	semicolon = 0;
+	c_btw = 0;
 	tmp = NULL;
 	ret = NULL;
 	tmp = ft_strtrim(str);
@@ -411,7 +421,9 @@ void	proc_init(t_proc *proc, char *command)
 t_plst *new_process(t_mini_exc *glob, char *command)
 {
 	t_proc	proc;
+	int		status;
 	
+	status = 0;
 	proc_init(&proc, command);
 	if (proc.trimmed)
 		ft_strdel(&proc.trimmed);
@@ -428,7 +440,7 @@ t_plst *new_process(t_mini_exc *glob, char *command)
 			proc.tab[proc.var_int[0]] = ft_strdup(proc.trimmed);
 			ft_strdel(&proc.trimmed);
 			proc.path = get_path(proc.tab[proc.var_int[0]]);
-			proc.var_int[1] = expand_path(glob, &proc.path);
+			proc.var_int[1] = expand_path(glob, &proc.path, &status);
 			if (proc.var_int[1] || check_if_builtin(proc.path))
 			{
 				if (proc.av)
@@ -449,6 +461,8 @@ t_plst *new_process(t_mini_exc *glob, char *command)
 					proc.var_int[2] = 0;
 				}
 				ft_strdel(&proc.path);
+				proc.node->status = status;
+				status = 0;
 				proc.node->argv = proc.av;
 				proc.node->envp = proc.ep;
 				proc.c = NULL;
@@ -486,6 +500,7 @@ t_plst *new_process(t_mini_exc *glob, char *command)
 				ft_strdel(&proc.path);
 				proc.node->argv = proc.av;
 				proc.node->envp = proc.ep;
+				proc.node->status = status;
 				proc.c = NULL;
 				if (proc.tab[proc.var_int[0] + 1])
 				{

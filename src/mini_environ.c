@@ -6,7 +6,7 @@
 /*   By: tvandivi <tvandivi@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/03/03 11:56:10 by tvandivi          #+#    #+#             */
-/*   Updated: 2020/03/03 15:36:39 by tvandivi         ###   ########.fr       */
+/*   Updated: 2020/03/04 19:00:33 by tvandivi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,7 @@ char	**copy_environ()
 	{
 		while (environ[i])
 		{
-			envp[i] = environ[i];
+			envp[i] = ft_strdup(environ[i]);
 			i++;
 		}
 		return (envp);
