@@ -2,20 +2,34 @@ NAME= ft_minishell
 
 TEST= test
 
-SRC := $(addsuffix .c, src/glob_init src/process src/startshell src/expand_tilde src/expand_dollar src/expand_path src/shell_history src/builtins src/start_utils src/mini_environ)
+LIB= libft.a
+
+BUILTINS := $(addsuffix .c, builtins/ft_mini_exit builtins/ft_mini_clear \
+	builtins/ft_mini_unset_env builtins/ft_mini_print_history \
+	builtins/ft_mini_echo builtins/ft_mini_set_env builtins/ft_mini_print_env \
+	builtins/ft_mini_change_dir)
+
+SRC := $(addsuffix .c, src/glob_init src/process src/startshell src/expand_tilde \
+	src/expand_dollar src/expand_path src/shell_history src/builtins src/mini_environ)
+
+TEST_SRC := $(addsuffix .c, src/builtins src/expand_dollar src/expand_path \
+	src/expand_tilde src/glob_init src/process src/shell_history src/mini_environ)
+
+UTILS := $(addsuffix .c, utils/start_utils utils/ft_mini_utils utils/mini_env_utils)
 
 INC := $(addsuffix .h, includes/ft_minishell includes/libft)
 
-FLAGS= -Wall -Werror -Wextra -Wunused-value -fsanitize=address -Wno-unused-variable
+FLAGS= -Wall -Werror -Wextra -Wunused-value -Wno-unused-variable
 
 $(NAME):
 	@make -C libft/ re
 	@cp libft/libft.a .
-	@gcc $(FLAGS) $(SRC) libft.a src/main.c -o $(NAME)
+	@gcc $(FLAGS) $(SRC) $(BUILTINS) $(UTILS) $(LIB) src/main.c -o $(NAME)
 
 $(TEST): fc
 	@make -C libft/ re
-	@gcc -g $(FLAGS) src/builtins.c src/expand_dollar.c src/expand_path.c src/expand_tilde.c src/glob_init.c src/process.c src/shell_history.c src/start_utils.c src/mini_environ.c test.c libft/libft.a -o shelltesting
+	@cp libft/libft.a .
+	@gcc -g $(FLAGS) $(TEST_SRC) $(BUILTINS) $(UTILS) tests/test.c $(LIB) -o shelltesting
 
 all: $(NAME)
 
