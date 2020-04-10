@@ -31,9 +31,7 @@ static int	is_path(char *str)
 static char	*chomp_path(char *str)
 {
 	char	*path;
-	int		i;
 
-	i = 0;
 	path = NULL;
 	if (str)
 	{
@@ -94,19 +92,14 @@ static char	*get_path(char *str)
 
 char	*all_but_first(char *str)
 {
-	int		i;
-	int		j;
-	int		len;
+	int	i;
 	char	*ret;
 
 	i = 0;
-	j = 0;
-	len = 0;
 	while (str[i] != '\0' && str[i] != ' ')
 		i++;
 	if (str[i] == ' ')
 	{
-		len = ft_strlen(&str[i]);
 		ret = ft_strnew((i + 1));
 		ret = ft_strcpy(ret, &str[i]);
 		return (ret);
@@ -116,16 +109,14 @@ char	*all_but_first(char *str)
 
 int		check_dir_for_cmd(char *env_paths, DIR *dr, char *path, char **command)
 {
-	int				i;
-	char			*tmp;
-	char			*full_path;
+	char		*tmp;
+	char		*full_path;
 	struct dirent	*dent;
 
 	while ((dent = readdir(dr)))
 	{
 		if (ft_strcmp(dent->d_name, path) == 0)
 		{
-			i = 1;
 			tmp = ft_strjoin(env_paths, "/");
 			full_path = ft_strjoin(tmp, dent->d_name);
 			ft_strdel(&tmp);

@@ -136,11 +136,9 @@ void		mini_changedir(t_mini_exc *glob, t_plst *node)
 	char	cwd[1024];
 	char	old[1024];
 	char	*path;
-	char	*newpwd;
 	int		i;
 
 	i = ft_2dlen(node->argv);
-	newpwd = NULL;
 	path = NULL;
 	ft_memset(cwd, '\0', 1024);
 	ft_memset(old, '\0', 1024);

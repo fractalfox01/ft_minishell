@@ -15,7 +15,9 @@
 int		run_builtin(t_mini_exc *glob, t_plst *node)
 {
 	if (glob)
-		;
+	{
+		// do nothing
+	}
 	if (ft_strcmp(node->path, "exit") == 0)
 		mini_shutdown(glob, node);
 	else if (ft_strcmp(node->path, "cd") == 0)

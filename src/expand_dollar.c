@@ -214,12 +214,8 @@ void	bad_expression(char *cmd, char **command)
 char	*expand_bracket(char *cmd, char *exp, char **command)
 {
 	char	*ret;
-	int		i;
-	int		j;
 
 	ret = NULL;
-	i = 0;
-	j = 0;
 	if (cmd && exp && command)
 	{
 		

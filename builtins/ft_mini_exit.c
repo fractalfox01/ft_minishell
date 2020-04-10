@@ -14,11 +14,6 @@
 
 void	mini_shutdown(t_mini_exc *glob, t_plst *node)
 {
-	t_plst	*n;
-	t_plst	*tmp;
-
-	n = NULL;
-	tmp = node;
 	glob->ampersand = 0;
 	glob->dent = NULL;
 	glob->dr = NULL;

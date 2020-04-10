@@ -38,12 +38,10 @@ char	*retrieve_key(t_mini_exc *glob, char *t_key)
 	int		i;
 	int		j;
 	int		len;
-	char	*tmp;
 
 	i = 0;
 	j = 0;
 	len = ft_strlen(t_key);
-	tmp = 0;
 	while (glob->envp[i])
 	{
 		while (glob->envp[i][j] == t_key[j])

@@ -139,13 +139,9 @@ char	*grab_key(char *str)
 char	*grab_value(char *str)
 {
 	char	*ret;
-	int		i;
-	int		j;
-	int		len;
+	int	i;
 
 	i = 0;
-	j = 0;
-	len = 0;
 	ret = NULL;
 	while (str[i] != '\0' && str[i] != '=')
 		i++;
@@ -206,16 +202,10 @@ char	*ft_sentencetrim(char *str)
 	int		len;
 	char	*tmp;
 	char	*ret;
-	int		c_btw;
-	int		ampersand;
-	int		semicolon;
 
 	i = 0;
 	j = 0;
 	k = 0;
-	ampersand = 0;
-	semicolon = 0;
-	c_btw = 0;
 	tmp = NULL;
 	ret = NULL;
 	tmp = ft_strtrim(str);

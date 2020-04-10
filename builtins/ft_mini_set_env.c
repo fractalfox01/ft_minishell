@@ -88,15 +88,8 @@ void	mini_update_env(t_mini_exc *glob, char *key, char *valu)
 static void	mini_remove_env(t_mini_exc *glob, char *key)
 {
 	int	i;
-	char	*tmp;
-	char	*tmp2;
 
 	i = 0;
-	tmp = NULL;
-	tmp2 = NULL;
-	// while (glob->envp[i])
-	// {
-	tmp2 = ft_strjoin(key, "=");
 	if ((i = check_for_key(glob, key)))
 	{
 		printf("found at idx [%d]: %s\n", i,  glob->envp[i]);
